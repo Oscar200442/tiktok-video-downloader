@@ -15,7 +15,7 @@ module.exports = async (req, res) => {
             method: 'GET',
             headers: {
                 'x-rapidapi-host': 'tiktok-video-no-watermark2.p.rapidapi.com',
-                'x-rapidapi-key': 'YOUR_RAPIDAPI_KEY' // REPLACE THIS
+                'x-rapidapi-key': 'e3931b9f32mshe4ee33a0f858b9ap1d2a15jsnff21a029d3d4' // REPLACE THIS
             }
         });
 
