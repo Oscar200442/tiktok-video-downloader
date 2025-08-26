@@ -1,57 +1,36 @@
-// api/download.js
+const fetch = require('node-fetch');
 
-export default async function handler(req, res) {
-    // Get the TikTok URL from the query parameters
-    const { url } = req.query;
-
-    if (!url) {
-        return res.status(400).json({ error: 'TikTok URL is required.' });
-    }
-
-    // Your RapidAPI key will be stored as an environment variable in Vercel
-    const apiKey = process.env.RAPIDAPI_KEY;
+module.exports = async (req, res) => {
+    const { url } = req.body;
     
-    if (!apiKey) {
-        return res.status(500).json({ error: 'API key is not configured.' });
+    if (!url) {
+        return res.status(400).json({ error: 'URL is required.' });
     }
 
-    // The API endpoint from RapidAPI for the TikTok downloader
-    const apiUrl = 'https://tiktok-video-downloader-api.p.rapidapi.com/media';
-    const options = {
-        method: 'GET',
-        headers: {
-            'x-rapidapi-key': apiKey,
-            'x-rapidapi-host': 'tiktok-video-downloader-api.p.rapidapi.com'
-        }
-    };
+    // This is the API endpoint to get the video link
+    const rapidApiUrl = `https://tiktok-video-no-watermark2.p.rapidapi.com/?url=${encodeURIComponent(url)}`;
 
     try {
-        const fetchUrl = `${apiUrl}?videoUrl=${encodeURIComponent(url)}`;
-        const response = await fetch(fetchUrl, options);
-        
-        if (!response.ok) {
-            const errorData = await response.json();
-            console.error('RapidAPI Error:', errorData);
-            throw new Error(errorData.message || 'Failed to fetch from RapidAPI.');
+        const response = await fetch(rapidApiUrl, {
+            method: 'GET',
+            headers: {
+                'x-rapidapi-host': 'tiktok-video-no-watermark2.p.rapidapi.com',
+                'x-rapidapi-key': 'YOUR_RAPIDAPI_KEY' // REPLACE THIS
+            }
+        });
+
+        const result = await response.json();
+
+        if (response.ok && result.data && result.data.play) {
+            // Success: Send the video link back to the frontend
+            res.status(200).json({ video_url: result.data.play });
+        } else {
+            // Error: API didn't return a valid link
+            res.status(400).json({ error: 'Failed to retrieve video link from TikTok API.' });
         }
-        
-        const data = await response.json();
-
-        // The API response structure might vary. Adjust this based on the actual response.
-        // I'm assuming the download URL is in a property like `media_url` or `download_url`.
-        // You should check the exact response from your RapidAPI dashboard.
-        const downloadUrl = data.media_url || data.aweme_list?.[0]?.video?.play_addr?.url_list?.[0];
-
-        if (!downloadUrl) {
-            console.error('No download URL found in API response:', data);
-            return res.status(500).json({ error: 'Could not find a downloadable video link.' });
-        }
-
-        // Send the download URL back to the front-end
-        res.status(200).json({ downloadUrl });
-
     } catch (error) {
-        console.error('Serverless function error:', error);
-        res.status(500).json({ error: error.message });
+        // Handle any network or other errors
+        res.status(500).json({ error: 'Internal server error.' });
+        console.error('API call error:', error);
     }
-}
+};
