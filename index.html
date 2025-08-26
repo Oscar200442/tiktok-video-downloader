@@ -3,17 +3,138 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>TikTok Downloader</title>
-    <link rel="stylesheet" href="style.css">
+    <title>TikTok Video Downloader</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&display=swap');
+        body {
+            font-family: 'Inter', sans-serif;
+        }
+        .bg-pattern {
+            background-image: url('data:image/svg+xml,%3Csvg width="6" height="6" viewBox="0 0 6 6" xmlns="http://www.w3.org/2000/svg"%3E%3Cg fill="%239C92AC" fill-opacity="0.2" fill-rule="evenodd"%3E%3Cpath d="M5 0h1L0 6V5zm1 6v-1L1 0h-1z"/%3E%3C/g%3E%3C/svg%3E');
+        }
+    </style>
 </head>
-<body>
-    <div class="container">
-        <h1>TikTok Video Downloader</h1>
-        <p>Paste a TikTok video link and hit download.</p>
-        <input type="text" id="tiktokUrl" placeholder="Paste TikTok URL here...">
-        <button id="downloadBtn">Download</button>
-        <div id="status"></div>
+<body class="bg-gray-900 text-gray-100 flex flex-col items-center justify-center min-h-screen py-12 px-4 sm:px-6 lg:px-8 bg-pattern">
+
+    <div class="w-full max-w-xl mx-auto">
+        <div class="bg-gray-800 bg-opacity-70 backdrop-blur-md p-8 sm:p-10 rounded-3xl shadow-2xl border border-gray-700">
+            <div class="flex flex-col items-center mb-6">
+                <svg xmlns="http://www.w3.org/2000/svg" class="h-16 w-16 text-pink-500" viewBox="0 0 24 24" fill="currentColor">
+                    <path d="M12.016 4.755c.57.172.934.33.934.331s.997 2.115.997 3.559c0 1.258-.87 2.454-2.128 2.87-1.259.416-2.659-.286-3.265-1.545-.606-1.258-.291-2.923 1.144-3.518s3.15-.365 3.298-.415c.148-.05.138-.13.067-.282-.07-.152-.162-.355-.262-.572-1.22-.395-2.26-.64-3.32-.64-1.26 0-2.474.34-3.504.996-2.583 1.63-4.148 4.256-4.148 7.076 0 4.965 4.02 8.986 8.985 8.986 2.23 0 4.288-.813 5.86-2.164 1.572-1.35 2.593-3.32 2.593-5.464 0-1.87-.803-3.56-2.098-4.757-1.295-1.197-2.983-1.89-4.87-1.89-1.272 0-2.464.384-3.486 1.05-.183.12-.393.204-.593.284-.2.08-.43.14-.652.19-.222.05-.44.07-.655.07-.798 0-1.57-.468-1.92-1.26-.352-.792-.04-1.68.752-2.03.626-.275 1.35-.452 2.09-.526z"/>
+                </svg>
+                <h1 class="text-3xl sm:text-4xl font-extrabold mt-4 text-white text-center">TikTok Downloader</h1>
+                <p class="mt-2 text-sm text-gray-400 text-center">Download TikTok videos without a watermark!</p>
+            </div>
+            
+            <div id="messageBox" class="hidden mb-6 p-4 rounded-xl border border-gray-600 bg-gray-700 text-sm font-medium"></div>
+
+            <div class="space-y-4">
+                <input id="videoUrlInput" type="text" placeholder="Paste TikTok video URL here..." class="w-full px-5 py-3 bg-gray-700 bg-opacity-50 text-gray-100 placeholder-gray-400 border border-gray-600 rounded-xl focus:outline-none focus:ring-2 focus:ring-pink-500 transition duration-300 ease-in-out shadow-sm">
+                
+                <button id="downloadButton" class="w-full py-3 px-6 bg-pink-600 hover:bg-pink-700 text-white font-bold rounded-xl transition duration-300 ease-in-out transform hover:scale-105 shadow-md focus:outline-none focus:ring-2 focus:ring-pink-500 focus:ring-offset-2 focus:ring-offset-gray-900">
+                    <span id="downloadText">Download Video</span>
+                    <svg id="loadingSpinner" class="hidden animate-spin h-5 w-5 text-white inline-block" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                        <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+                        <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                    </svg>
+                </button>
+            </div>
+            
+            <p class="mt-6 text-xs text-gray-400 text-center">This tool is for personal use and should be used in compliance with TikTok's terms of service.</p>
+        </div>
     </div>
-    <script src="main.js"></script>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', () => {
+            const videoUrlInput = document.getElementById('videoUrlInput');
+            const downloadButton = document.getElementById('downloadButton');
+            const downloadText = document.getElementById('downloadText');
+            const loadingSpinner = document.getElementById('loadingSpinner');
+            const messageBox = document.getElementById('messageBox');
+
+            const showMessage = (message, isError = false) => {
+                messageBox.textContent = message;
+                messageBox.classList.remove('hidden');
+                messageBox.classList.toggle('text-red-300', isError);
+                messageBox.classList.toggle('bg-red-900', isError);
+                messageBox.classList.toggle('border-red-600', isError);
+                messageBox.classList.toggle('text-green-300', !isError);
+                messageBox.classList.toggle('bg-green-900', !isError);
+                messageBox.classList.toggle('border-green-600', !isError);
+            };
+
+            const toggleLoadingState = (isLoading) => {
+                downloadButton.disabled = isLoading;
+                downloadText.classList.toggle('hidden', isLoading);
+                loadingSpinner.classList.toggle('hidden', !isLoading);
+            };
+
+            const downloadVideo = async (videoUrl) => {
+                // Here, you would call your Vercel serverless function
+                // For this example, we'll simulate the API call and download.
+                // Replace this with your actual API endpoint.
+                
+                // Example API call to a Vercel serverless function
+                // const apiEndpoint = '/api/download-tiktok';
+                // const headers = { 'Content-Type': 'application/json' };
+                // const body = JSON.stringify({ url: videoUrl });
+
+                // try {
+                //     const response = await fetch(apiEndpoint, { method: 'POST', headers, body });
+                //     const data = await response.json();
+
+                //     if (response.ok) {
+                //         // Trigger the download with the video URL from the API response
+                //         const downloadLink = document.createElement('a');
+                //         downloadLink.href = data.downloadUrl;
+                //         downloadLink.download = 'tiktok_video.mp4';
+                //         document.body.appendChild(downloadLink);
+                //         downloadLink.click();
+                //         document.body.removeChild(downloadLink);
+                //         showMessage('Download started successfully!', false);
+                //     } else {
+                //         showMessage(data.error || 'Failed to download video.', true);
+                //     }
+                // } catch (error) {
+                //     console.error('Download error:', error);
+                //     showMessage('An unexpected error occurred. Please try again.', true);
+                // }
+
+                // --- Placeholder for demonstration purposes ---
+                showMessage('Simulating download... Check the console for the mock download URL.');
+                console.log('Simulating API response. Here is the download URL:', 'https://example.com/tiktok-video.mp4');
+                
+                // Simulate a file download by creating a temporary link
+                const mockDownloadLink = document.createElement('a');
+                mockDownloadLink.href = 'https://www.w3.org/WAI/ER/tests/xhtml/testfiles/resources/pdf/dummy.pdf'; // Using a dummy file for demonstration
+                mockDownloadLink.download = 'tiktok_video.mp4';
+                document.body.appendChild(mockDownloadLink);
+                mockDownloadLink.click();
+                document.body.removeChild(mockDownloadLink);
+                // --- End of placeholder ---
+            };
+
+            downloadButton.addEventListener('click', async () => {
+                const videoUrl = videoUrlInput.value.trim();
+                if (!videoUrl) {
+                    showMessage('Please enter a valid TikTok video URL.', true);
+                    return;
+                }
+
+                toggleLoadingState(true);
+                await downloadVideo(videoUrl);
+                toggleLoadingState(false);
+            });
+
+            // Handle Enter key press
+            videoUrlInput.addEventListener('keypress', (event) => {
+                if (event.key === 'Enter') {
+                    downloadButton.click();
+                }
+            });
+        });
+    </script>
+
 </body>
 </html>
