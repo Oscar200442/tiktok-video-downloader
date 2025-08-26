@@ -71,48 +71,32 @@
             };
 
             const downloadVideo = async (videoUrl) => {
-                // Here, you would call your Vercel serverless function
-                // For this example, we'll simulate the API call and download.
-                // Replace this with your actual API endpoint.
-                
-                // Example API call to a Vercel serverless function
-                // const apiEndpoint = '/api/download-tiktok';
-                // const headers = { 'Content-Type': 'application/json' };
-                // const body = JSON.stringify({ url: videoUrl });
+                // The API endpoint for your Vercel serverless function
+                const apiEndpoint = '/api/download'; 
+                const headers = { 'Content-Type': 'application/json' };
+                const body = JSON.stringify({ url: videoUrl });
 
-                // try {
-                //     const response = await fetch(apiEndpoint, { method: 'POST', headers, body });
-                //     const data = await response.json();
+                try {
+                    const response = await fetch(apiEndpoint, { method: 'POST', headers, body });
+                    const data = await response.json();
 
-                //     if (response.ok) {
-                //         // Trigger the download with the video URL from the API response
-                //         const downloadLink = document.createElement('a');
-                //         downloadLink.href = data.downloadUrl;
-                //         downloadLink.download = 'tiktok_video.mp4';
-                //         document.body.appendChild(downloadLink);
-                //         downloadLink.click();
-                //         document.body.removeChild(downloadLink);
-                //         showMessage('Download started successfully!', false);
-                //     } else {
-                //         showMessage(data.error || 'Failed to download video.', true);
-                //     }
-                // } catch (error) {
-                //     console.error('Download error:', error);
-                //     showMessage('An unexpected error occurred. Please try again.', true);
-                // }
-
-                // --- Placeholder for demonstration purposes ---
-                showMessage('Simulating download... Check the console for the mock download URL.');
-                console.log('Simulating API response. Here is the download URL:', 'https://example.com/tiktok-video.mp4');
-                
-                // Simulate a file download by creating a temporary link
-                const mockDownloadLink = document.createElement('a');
-                mockDownloadLink.href = 'https://www.w3.org/WAI/ER/tests/xhtml/testfiles/resources/pdf/dummy.pdf'; // Using a dummy file for demonstration
-                mockDownloadLink.download = 'tiktok_video.mp4';
-                document.body.appendChild(mockDownloadLink);
-                mockDownloadLink.click();
-                document.body.removeChild(mockDownloadLink);
-                // --- End of placeholder ---
+                    if (response.ok) {
+                        // Trigger the download with the video URL from the API response
+                        const downloadLink = document.createElement('a');
+                        downloadLink.href = data.downloadUrl;
+                        downloadLink.download = 'tiktok_video.mp4';
+                        document.body.appendChild(downloadLink);
+                        downloadLink.click();
+                        document.body.removeChild(downloadLink);
+                        showMessage('Download started successfully!', false);
+                    } else {
+                        // Show the error message from the API
+                        showMessage(data.error || 'Failed to download video.', true);
+                    }
+                } catch (error) {
+                    console.error('Download error:', error);
+                    showMessage('An unexpected error occurred. Please try again.', true);
+                }
             };
 
             downloadButton.addEventListener('click', async () => {
