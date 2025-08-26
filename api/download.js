@@ -1,36 +1,49 @@
-const fetch = require('node-fetch');
+// A simple example of a Vercel serverless function
+// File: /api/download.js
 
-module.exports = async (req, res) => {
-    const { url } = req.body;
-    
-    if (!url) {
-        return res.status(400).json({ error: 'URL is required.' });
+import fetch from 'node-fetch'; // Vercel has node-fetch built-in
+
+export default async function handler(request, response) {
+  // Check if the request method is POST
+  if (request.method !== 'POST') {
+    return response.status(405).json({ error: 'Method Not Allowed' });
+  }
+
+  // Get the video URL from the request body
+  const { url } = request.body;
+
+  if (!url) {
+    return response.status(400).json({ error: 'Video URL is required.' });
+  }
+
+  // Define your RapidAPI details
+  // ***IMPORTANT: Never expose your API key in client-side code!***
+  const rapidApiKey = process.env.RAPIDAPI_KEY; // Use an environment variable
+  const rapidApiHost = 'tiktok-video-downloader-api.p.rapidapi.com';
+
+  const apiUrl = `https://${rapidApiHost}/get?url=${encodeURIComponent(url)}`;
+
+  try {
+    const apiResponse = await fetch(apiUrl, {
+      method: 'GET',
+      headers: {
+        'x-rapidapi-key': rapidApiKey,
+        'x-rapidapi-host': rapidApiHost,
+      },
+    });
+
+    const data = await apiResponse.json();
+
+    if (apiResponse.ok && data.download) {
+      // Respond with the direct download URL
+      return response.status(200).json({ downloadUrl: data.download });
+    } else {
+      // Handle API errors
+      return response.status(500).json({ error: data.error || 'Failed to get download URL from RapidAPI.' });
     }
 
-    // This is the API endpoint to get the video link
-    const rapidApiUrl = `https://tiktok-video-no-watermark2.p.rapidapi.com/?url=${encodeURIComponent(url)}`;
-
-    try {
-        const response = await fetch(rapidApiUrl, {
-            method: 'GET',
-            headers: {
-                'x-rapidapi-host': 'tiktok-video-no-watermark2.p.rapidapi.com',
-                'x-rapidapi-key': 'e3931b9f32mshe4ee33a0f858b9ap1d2a15jsnff21a029d3d4' // REPLACE THIS
-            }
-        });
-
-        const result = await response.json();
-
-        if (response.ok && result.data && result.data.play) {
-            // Success: Send the video link back to the frontend
-            res.status(200).json({ video_url: result.data.play });
-        } else {
-            // Error: API didn't return a valid link
-            res.status(400).json({ error: 'Failed to retrieve video link from TikTok API.' });
-        }
-    } catch (error) {
-        // Handle any network or other errors
-        res.status(500).json({ error: 'Internal server error.' });
-        console.error('API call error:', error);
-    }
-};
+  } catch (error) {
+    console.error('Error calling RapidAPI:', error);
+    return response.status(500).json({ error: 'Internal server error.' });
+  }
+}
